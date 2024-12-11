@@ -101,8 +101,8 @@ class _PopupScreenState extends State<PopupScreen> {
                     ),
                     title: editingIndex == index
                         ? TextField(
-                      //controller: _textEditingController,
-                      //keyboardType: TextInputType.text,
+                      controller: _textEditingController,
+                      keyboardType: TextInputType.text,
                       style: const TextStyle(color: Colors.white),
                       decoration: const InputDecoration(
                         border: UnderlineInputBorder(),

@@ -225,7 +225,7 @@ class _tdPopupScreenState extends State<tdPopupScreen> {
     });
   }
 
-  
+
 
   void _startEditing(int index) {
     setState(() {

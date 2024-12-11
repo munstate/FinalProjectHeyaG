@@ -1,9 +1,11 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'SubjectTimerProvider.dart';
 import 'SujPopup.dart';
 import 'todoPopup.dart';
 import 'footer.dart';
+import 'UserProvider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -35,6 +37,8 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      final subjectTimerProvider = Provider.of<SubjectTimerProvider>(context, listen: false);
+      subjectTimerProvider.loadSubjects(context); // 여기서 Firebase 데이터 로드
       _updateTotalTime(); // 초기화 후 총 시간을 업데이트
     });
   }
@@ -167,19 +171,50 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // 과목 리스트 빌드
+
+  Widget _buildTotalTime() {
+    return Consumer<SubjectTimerProvider>(
+      builder: (context, provider, child) {
+        return Container(
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: const Color.fromRGBO(80, 255, 53, 1),
+              width: 2,
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              const Text(
+                "TOTAL TIME",
+                style: TextStyle(color: Colors.white, fontSize: 18),
+              ),
+              Text(
+                provider.totalElapsedTime, // 실시간 업데이트된 값
+                style: const TextStyle(
+                  fontSize: 48,
+                  fontWeight: FontWeight.bold,
+                  color: Color.fromRGBO(80, 255, 53, 1),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+
   Widget _buildSubjectList() {
-    final subjectTimerProvider =
-    Provider.of<SubjectTimerProvider>(context, listen: true);
+    final subjectTimerProvider = Provider.of<SubjectTimerProvider>(context, listen: true);
 
     return ListView.builder(
       shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
       itemCount: subjectTimerProvider.subjects.length,
       itemBuilder: (context, index) {
         final subjectName = subjectTimerProvider.subjects[index];
-        final elapsedTime =
-            subjectTimerProvider.elapsedTimes[subjectName] ?? "00:00:00";
+        final isActive = subjectTimerProvider.activeSubject == subjectName;
 
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -194,24 +229,24 @@ class _HomeScreenState extends State<HomeScreen> {
                   subjectTimerProvider.timers[subjectName]?.isRunning ?? false
                       ? Icons.pause
                       : Icons.play_arrow,
-                  color: Colors.white,
+                  color: isActive ? Colors.green : Colors.white,
                 ),
-                onPressed: () {
-                  if (subjectTimerProvider.timers[subjectName]?.isRunning ??
-                      false) {
+                onPressed: isActive || subjectTimerProvider.activeSubject == null
+                    ? () {
+                  if (subjectTimerProvider.timers[subjectName]?.isRunning ?? false) {
                     subjectTimerProvider.stopTimer(subjectName);
                   } else {
                     subjectTimerProvider.startTimer(subjectName);
                   }
-                  _updateTotalTime();
-                },
+                }
+                    : null, // 다른 과목 활성화 시 버튼 비활성화
               ),
               title: Text(
                 subjectName,
                 style: const TextStyle(color: Colors.white),
               ),
               trailing: Text(
-                elapsedTime,
+                subjectTimerProvider.elapsedTimes[subjectName] ?? "00:00:00",
                 style: const TextStyle(color: Colors.white),
               ),
             ),
@@ -220,6 +255,7 @@ class _HomeScreenState extends State<HomeScreen> {
       },
     );
   }
+
 
   // 과목 팝업 띄우기 메서드
   void _showPopup() {
@@ -231,19 +267,20 @@ class _HomeScreenState extends State<HomeScreen> {
           subjects: subjectTimerProvider.subjects,
           onDeleteSubject: (int index) {
             setState(() {
-              subjectTimerProvider.deleteSubject(index); // SubjectTimerProvider에서 과목 삭제
+              subjectTimerProvider.deleteSubject(context,index); // SubjectTimerProvider에서 과목 삭제
               _totalElapsedTime = subjectTimerProvider.totalElapsedTime; // 총 시간 업데이트
             });
           },
           onAddSubject: (String newSubject) {
             setState(() {
-              subjectTimerProvider.addSubject(newSubject); // SubjectTimerProvider에서 과목 추가
+              subjectTimerProvider.addSubject(context, newSubject); // SubjectTimerProvider에서 과목 추가
               _totalElapsedTime = subjectTimerProvider.totalElapsedTime; // 총 시간 업데이트
             });
           },
           onEditSubject: (int index, String newName) {
+            print("onEditSubject called with index: $index, newName: $newName");
             setState(() {
-              subjectTimerProvider.editSubject(index, newName); // SubjectTimerProvider에서 과목 수정
+              subjectTimerProvider.editSubject(context, index, newName); // SubjectTimerProvider에서 과목 수정
               _totalElapsedTime = subjectTimerProvider.totalElapsedTime; // 총 시간 업데이트
             });
           },
@@ -296,6 +333,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context); // UserProvider에서 사용자 정보 가져오기
     return Scaffold(
       backgroundColor: Colors.black,
       body: SingleChildScrollView(
@@ -304,30 +342,49 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16.0),
+                child: Text(
+                  '${userProvider.name} 님, 어서오세요!',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(height: 16),
               // 상단 타이머 영역
-              Container(
-                decoration: BoxDecoration(
-                  border: Border.all(
-                      color: const Color.fromRGBO(80, 255, 53, 1), width: 2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    const Text(
-                      "TOTAL TIME",
-                      style: TextStyle(color: Colors.white, fontSize: 18),
-                    ),
-                    Text(
-                      _totalElapsedTime,
-                      style: const TextStyle(
-                        fontSize: 48,
-                        fontWeight: FontWeight.bold,
-                        color: Color.fromRGBO(80, 255, 53, 1),
+              Consumer<SubjectTimerProvider>(
+                builder: (context, provider, child) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: const Color.fromRGBO(80, 255, 53, 1),
+                        width: 2,
                       ),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                  ],
-                ),
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: [
+                        const Text(
+                          "TOTAL TIME",
+                          style: TextStyle(color: Colors.white, fontSize: 18),
+                        ),
+                        Text(
+                          provider.totalElapsedTime, // 실시간 업데이트된 값
+                          style: const TextStyle(
+                            fontSize: 48,
+                            fontWeight: FontWeight.bold,
+                            color: Color.fromRGBO(80, 255, 53, 1),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 32),
 
@@ -423,3 +480,5 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
+
+

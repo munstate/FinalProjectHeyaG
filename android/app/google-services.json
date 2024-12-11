@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "549469394624",
+    "firebase_url": "https://fir-demo-2b6ea-default-rtdb.firebaseio.com",
     "project_id": "fir-demo-2b6ea",
     "storage_bucket": "fir-demo-2b6ea.firebasestorage.app"
   },
@@ -12,7 +13,12 @@
           "package_name": "com.example.flutter_application_110"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "549469394624-75968cir7vrke37ipmb9j9nf6nv94g3j.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAQsS9v0cZMBMN_FU_PAiO1niyJTC-7zfw"
@@ -20,7 +26,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "549469394624-75968cir7vrke37ipmb9j9nf6nv94g3j.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "549469394624-qs06f3rqfmahdr92ofq3m14jm8lc1blt.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.flutterApplication110"
+              }
+            }
+          ]
         }
       }
     }
