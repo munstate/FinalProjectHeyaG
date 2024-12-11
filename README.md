@@ -1,6 +1,7 @@
 # flutter_application_110
 
-A new Flutter project.
+안드로이드 파이널 프로젝트 
+학습 관리 앱 HeyaG
 
 ## Getting Started
 
